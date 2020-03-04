@@ -65,7 +65,7 @@ function quickthread_install() {
 					</div>
 				</td>
 			</tr>
-			{$captcha}
+			{$regimage}
 			<tr>
 				<td colspan="2" align="center" class="tfoot"><input type="submit" class="button" value="{$lang->post_thread}" tabindex="2" accesskey="s" id="quick_thread_submit" /> <input type="submit" class="button" name="previewpost" value="{$lang->preview_post}" tabindex="3" /></td>
 			</tr>
@@ -114,11 +114,11 @@ function quickthread_run() {
 	global $theme, $mybb, $templates, $fid, $lang, $collapsed, $collapsedimg;
 	
 	if(function_exists('build_prefix_select')) {
-		if(!$lang->no_prefix) $lang->load('newthread');
+		/*if(!$lang->no_prefix) */$lang->load('newthread');
 		// note that newthread lang needs to load before showthread lang, or stuff like $lang->close_thread gets overridden
 		$prefixselect = build_prefix_select($fid);
 	}
-	
+
 	$lang->load('showthread');
 	if(!$lang->quick_thread) $lang->quick_thread = 'Quick New Thread';
 	if(!$lang->subject) $lang->subject = 'Subject';
@@ -135,7 +135,7 @@ function quickthread_run() {
 		$postoptions_subscriptionmethod_dont = "checked=\"checked\"";
 	*/
 	
-	if($mybb->settings['captchaimage'] && !$mybb->user['uid']) {
+	/*if($mybb->settings['captchaimage'] && !$mybb->user['uid']) {
 		if(function_exists('neocaptcha_generate'))
 			$captcha = neocaptcha_generate('post_captcha');
 		elseif($mybb->version_code >= 1605) {
@@ -158,8 +158,18 @@ function quickthread_run() {
 			));
 			eval('$captcha = "'.$templates->get('post_captcha').'";');
 		}
+	}*/
+	if($mybb->settings['captchaimage'] && !$mybb->user['uid'])
+	{
+		require_once MYBB_ROOT.'inc/class_captcha.php';
+		$captcha = new captcha(true, "member_register_regimage");
+
+		if($captcha->html)
+		{
+			$regimage = $captcha->html;
+		}
 	}
-	
+
 	$posthash = md5($mybb->user['uid'].mt_rand());
 	$modoptions = '';
 	if(is_moderator($fid, 'canopenclosethreads')) {
