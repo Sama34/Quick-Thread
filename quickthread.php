@@ -65,7 +65,7 @@ function quickthread_install() {
 					</div>
 				</td>
 			</tr>
-			{$regimage}
+			{$captcha}
 			<tr>
 				<td colspan="2" align="center" class="tfoot"><input type="submit" class="button" value="{$lang->post_thread}" tabindex="2" accesskey="s" id="quick_thread_submit" /> <input type="submit" class="button" name="previewpost" value="{$lang->preview_post}" tabindex="3" /></td>
 			</tr>
@@ -114,7 +114,7 @@ function quickthread_run() {
 	global $theme, $mybb, $templates, $fid, $lang, $collapsed, $collapsedimg;
 	
 	if(function_exists('build_prefix_select')) {
-		/*if(!$lang->no_prefix) */$lang->load('newthread');
+		$lang->load('newthread');
 		// note that newthread lang needs to load before showthread lang, or stuff like $lang->close_thread gets overridden
 		$prefixselect = build_prefix_select($fid);
 	}
@@ -126,47 +126,52 @@ function quickthread_run() {
 	$postoptionschecked = array('signature' => '');
 	if($mybb->user['signature'] != '')
 		$postoptionschecked['signature'] = ' checked="checked"';
-	/*
-	if($mybb->user['subscriptionmethod'] ==  1)
-		$postoptions_subscriptionmethod_none = "checked=\"checked\"";
-	else if($mybb->user['subscriptionmethod'] == 2)
-		$postoptions_subscriptionmethod_instant = "checked=\"checked\"";
-	else
-		$postoptions_subscriptionmethod_dont = "checked=\"checked\"";
-	*/
-	
-	/*if($mybb->settings['captchaimage'] && !$mybb->user['uid']) {
-		if(function_exists('neocaptcha_generate'))
-			$captcha = neocaptcha_generate('post_captcha');
-		elseif($mybb->version_code >= 1605) {
-			// new CAPTCHA system
-			require_once MYBB_ROOT.'inc/class_captcha.php';
-			$post_captcha = new captcha(false, 'post_captcha');
-			// wow, this really is horrible code...
-			if($post_captcha->type == 1)
-				$post_captcha->build_captcha();
-			elseif($post_captcha->type == 2)
-				$post_captcha->build_recaptcha();
-			$captcha = $post_captcha->html;
-		} elseif(function_exists('imagepng')) {
-			$randomstr = random_str(5);
-			$imagehash = md5(random_str(12));
-			$GLOBALS['db']->insert_query('captcha', array(
-				'imagehash' => $imagehash,
-				'imagestring' => $randomstr,
-				'dateline' => TIME_NOW
-			));
-			eval('$captcha = "'.$templates->get('post_captcha').'";');
-		}
-	}*/
+
 	if($mybb->settings['captchaimage'] && !$mybb->user['uid'])
 	{
-		require_once MYBB_ROOT.'inc/class_captcha.php';
-		$captcha = new captcha(true, "member_register_regimage");
+		$correct = false;
 
-		if($captcha->html)
+		require_once MYBB_ROOT.'inc/class_captcha.php';
+
+		$post_captcha = new captcha(false, "post_captcha");
+
+		if($post_captcha->type == 1)
 		{
-			$regimage = $captcha->html;
+			if($post_captcha->validate_captcha() == true)
+			{
+				$correct = true;
+
+				$captcha = $post_captcha->build_hidden_captcha();
+			}
+		}
+
+		if(!$correct)
+		{
+			if($post_captcha->type == 1)
+			{
+				$post_captcha->build_captcha();
+			}
+			elseif(in_array($post_captcha->type, array(4, 5, 8)))
+			{
+				$post_captcha->build_recaptcha();
+			}
+			elseif(in_array($post_captcha->type, array(6, 7)))
+			{
+				$post_captcha->build_hcaptcha();
+			}
+		}
+		else if($correct && (in_array($post_captcha->type, array(4, 5, 8))))
+		{
+			$post_captcha->build_recaptcha();
+		}
+		else if($correct && (in_array($post_captcha->type, array(6, 7))))
+		{
+			$post_captcha->build_hcaptcha();
+		}
+
+		if($post_captcha->html)
+		{
+			$captcha = $post_captcha->html;
 		}
 	}
 
@@ -183,5 +188,3 @@ function quickthread_run() {
 		$templates->cache['forumdisplay'] = str_replace('{$threadslist}', '{$threadslist}{$quickthread}', $templates->cache['forumdisplay']);
 	}
 }
-
-?>
