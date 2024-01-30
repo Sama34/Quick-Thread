@@ -114,6 +114,9 @@ function quickthread_run() {
 		return;
 	
 	global $theme, $mybb, $templates, $fid, $lang, $collapsed, $collapsedimg;
+
+	isset($collapsedimg['quickthread']) || $collapsedimg['quickthread'] = '';
+	isset($collapsed['quickthread_e']) || $collapsed['quickthread_e'] = '';
 	
 	if(function_exists('build_prefix_select')) {
 		$lang->load('newthread');
@@ -122,12 +125,14 @@ function quickthread_run() {
 	}
 
 	$lang->load('showthread');
-	if(!$lang->quick_thread) $lang->quick_thread = 'Quick New Thread';
-	if(!$lang->subject) $lang->subject = 'Subject';
+	isset($lang->quick_thread) || $lang->quick_thread = 'Quick New Thread';
+	isset($lang->subject) || $lang->subject = 'Subject';
 	
 	$postoptionschecked = array('signature' => '');
 	if($mybb->user['signature'] != '')
 		$postoptionschecked['signature'] = ' checked="checked"';
+
+    $captcha = '';
 
 	if($mybb->settings['captchaimage'] && !$mybb->user['uid'])
 	{
