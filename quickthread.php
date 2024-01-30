@@ -62,7 +62,9 @@ function quickthread_install() {
 				<td class="trow2">
 					<div style="width: 95%">
 						<textarea style="width: 100%; padding: 4px; margin: 0;" rows="8" cols="80" name="message" id="message" tabindex="2"></textarea>
+						{$codebuttons}
 					</div>
+					{$smilieinserter}
 				</td>
 			</tr>
 			{$captcha}
@@ -176,13 +178,23 @@ function quickthread_run() {
 	}
 
 	$posthash = md5($mybb->user['uid'].mt_rand());
-	$modoptions = '';
+	$modoptions = $codebuttons = $smilieinserter = '';
 	if(is_moderator($fid, 'canopenclosethreads')) {
 		$modoptions .= '<br /><label><input type="checkbox" class="checkbox" name="modoptions[closethread]" value="1" />&nbsp;<strong>'.$lang->close_thread.'</strong></label>';
 	}
 	if(is_moderator($fid, 'canmanagethreads')) {
 		$modoptions .= '<br /><label><input type="checkbox" class="checkbox" name="modoptions[stickthread]" value="1" />&nbsp;<strong>'.$lang->stick_thread.'</strong></label>';
 	}
+
+    if($mybb->settings['bbcodeinserter'] != 0 && $foruminfo['allowmycode'] != 0 && (!$mybb->user['uid'] || $mybb->user['showcodebuttons'] != 0))
+    {
+        $codebuttons = build_mycode_inserter("message", $foruminfo['allowsmilies']);
+        if($foruminfo['allowsmilies'] != 0)
+        {
+            $smilieinserter = build_clickable_smilies();
+        }
+    }
+
 	eval('$GLOBALS[\'quickthread\'] = "'.$templates->get('forumdisplay_quick_thread').'";');
 	if(!strpos($templates->cache['forumdisplay'], '{$quickthread}')) {
 		$templates->cache['forumdisplay'] = str_replace('{$threadslist}', '{$threadslist}{$quickthread}', $templates->cache['forumdisplay']);
