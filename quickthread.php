@@ -197,6 +197,6 @@ function quickthread_run() {
 
 	eval('$GLOBALS[\'quickthread\'] = "'.$templates->get('forumdisplay_quick_thread').'";');
 	if(!strpos($templates->cache['forumdisplay'], '{$quickthread}')) {
-		$templates->cache['forumdisplay'] = str_replace('{$threadslist}', '{$threadslist}{$quickthread}', $templates->cache['forumdisplay']);
+		$templates->cache['forumdisplay'] = str_replace('<!--QUICK_THREAD-->', '{$quickthread}', $templates->cache['forumdisplay']);
 	}
 }
